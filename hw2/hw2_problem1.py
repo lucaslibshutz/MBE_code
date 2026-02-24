@@ -65,12 +65,11 @@ print(P_xtB)
 
 # %%
 # Part (d): Noise covariance estimate
-rHat_va = np.zeros((3,3))
+v_a = np.zeros((3,20))
 for k in range(n):
     zk = za[:,[k]]
-    outMat = zk - H @ xhatA
-    rHat_va += zk - H @ xhatA
-rHat_va = rHat_va / n
+    v_a += zk - H @ xhatA
+rHat_va = 1 / n * (v_a @ np.transpose(v_a))
 print("rHat_va:",rHat_va)
 
 # Put this into new LS estimate
