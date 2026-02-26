@@ -1,9 +1,8 @@
 import numpy as np
-from nonlinearLS import nonlinearLS
 from beaconNLS import beaconNLS
 
 np.set_printoptions(precision=5, suppress=True)
-np.random.seed(10)
+# np.random.seed(20)
 
 # Problem setup: beacons
 bA = np.array([-10.0,100.0]).reshape(-1,1)
@@ -15,7 +14,7 @@ xtrue = np.array([-5.0, 2.0]).reshape(-1,1)
 # Perfect ranges
 RA = np.linalg.norm(bA - xtrue)
 RB = np.linalg.norm(bB - xtrue)
-RC = np.linalg.norm(bB - xtrue)
+RC = np.linalg.norm(bC - xtrue)
 
 n = 10 # Number of measurements
 
