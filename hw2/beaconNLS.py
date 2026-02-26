@@ -93,4 +93,3 @@ def beaconNLS(z, R, x0, xS):
     xhatF = xhat[:, -1]
 
     return xhatF, PxhatF, Hhat, iter_count
-

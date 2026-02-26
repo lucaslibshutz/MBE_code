@@ -2,7 +2,7 @@ import numpy as np
 from beaconNLS import beaconNLS
 
 np.set_printoptions(precision=5, suppress=True)
-# np.random.seed(20)
+np.random.seed(20)
 
 # Problem setup: beacons
 bA = np.array([-10.0,100.0]).reshape(-1,1)
@@ -19,6 +19,7 @@ RC = np.linalg.norm(bC - xtrue)
 n = 10 # Number of measurements
 
 # Part (a): Three beacons (A,B,C)
+print("Problem 5(a): Three beacons (A,B,C)")
 
 R_a = np.diag([10.0,10.0,10.0])
 v_a = np.linalg.cholesky(R_a) @ np.random.randn(3,n)
@@ -34,8 +35,8 @@ xS = np.array([
 
 xhatA, PxhatA, HhatA, iter_countA = beaconNLS(z_a, R_a, x0, xS)
 
-print(xhatA)
-print(iter_countA)
+print(f"xHat = {xhatA}")
+print(f"Number of iterations: {iter_countA}")
 
 # Part (b): Two beacons (A,B) and (B,C)
 
