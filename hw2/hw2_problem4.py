@@ -1,6 +1,6 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from MMSEestimate import mmse_estimate, mmse_estimate_batch
+from MMSEestimate import mmse_estimate_batch
+# from matplotlib import pyplot as plt
 
 np.set_printoptions(precision=8, suppress=True)
 def print_arr_sci(arr):

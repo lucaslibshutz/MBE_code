@@ -77,7 +77,7 @@ def mmse_estimate_batch(z, H, R, x0, P0):
     # Build R
     R = np.asarray(R)
     if R.ndim == 1: # only variances
-        W = np.diag(1.0 / R)
+        W = np.diag(1.0 / R**2)
     else:
         # R is covariance matrix
         W = np.linalg.inv(R) 

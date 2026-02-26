@@ -1,4 +1,6 @@
 import numpy as np
+from nonlinearLS import nonlinearLS
+from beaconNLS import beaconNLS
 
 np.set_printoptions(precision=5, suppress=True)
 np.random.seed(10)
@@ -22,6 +24,14 @@ n = 10 # Number of measurements
 R_a = np.diag(10.0 * np.ones(3))
 v_a = np.linalg.cholesky(R_a) @ np.random.randn(3,n)
 z_a = np.tile(np.array([RA, RB, RC]).reshape(-1,1), (1,n)) + v_a
+
+x0 = np.array([0.0,0.0])
+xS = np.vstack((bA.T,bB.T,bC.T))
+
+xhatA, PxhatA, HhatA, iter_countA = beaconNLS(z_a, R_a, x0, xS)
+
+print(xhatA)
+print(iter_countA)
 
 # Part (b): Two beacons (A,B) and (B,C)
 
