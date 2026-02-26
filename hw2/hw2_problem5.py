@@ -21,12 +21,17 @@ n = 10 # Number of measurements
 
 # Part (a): Three beacons (A,B,C)
 
-R_a = np.diag(10.0 * np.ones(3))
+R_a = np.diag([10.0,10.0,10.0])
 v_a = np.linalg.cholesky(R_a) @ np.random.randn(3,n)
 z_a = np.tile(np.array([RA, RB, RC]).reshape(-1,1), (1,n)) + v_a
 
 x0 = np.array([0.0,0.0])
-xS = np.vstack((bA.T,bB.T,bC.T))
+# xS = np.vstack((bA.T,bB.T,bC.T))
+xS = np.array([
+    [-10.0,100.0],
+    [490.0,20.0],
+    [500.0,40.0]
+])
 
 xhatA, PxhatA, HhatA, iter_countA = beaconNLS(z_a, R_a, x0, xS)
 
