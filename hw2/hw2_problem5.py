@@ -36,6 +36,7 @@ xS = np.array([
 xhatA, PxhatA, HhatA, iter_countA = beaconNLS(z_a, R_a, x0, xS)
 
 print(f"xHat = {xhatA}")
+print(f"Pxhat = {PxhatA}")
 print(f"Number of iterations: {iter_countA}")
 
 # Part (b): Two beacons (A,B) and (B,C)
