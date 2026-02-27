@@ -75,8 +75,8 @@ print("rHat_va:",rHat_va)
 # Put this into new LS estimate
 xhatD, PxhatD = LSestimate(za, H, rHat_va)
 xhatD = xhatD.reshape((2,1))
-print(xhatD)
-print(PxhatD)
+print("xhatD:",xhatD)
+print("PxhatD:",PxhatD)
 
 # %%
 # Part (e): z_3 with uniform distribution
