@@ -1,6 +1,7 @@
 import numpy as np
 from MMSEestimate import mmse_estimate_batch
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
+import addcopyfighandler
 
 np.set_printoptions(precision=8, suppress=True)
 def print_arr_sci(arr):
@@ -64,10 +65,39 @@ for Rv in R_list:
 xhatB_list = np.array(xhatB_list)
 PxhatB_list = np.array(PxhatB_list)
 
+print(xhatB_list.shape)
+print(PxhatB_list.shape)
+
+# Plot results
+
+xhat = xhatB_list
+P = PxhatB_list
+
+N_alpha, state_dim = xhat.shape
+
+xi = xhat.T
+sigi = np.array([np.sqrt(np.diag(P[a])) for a in range(N_alpha)]).T
+
+fig, axes = plt.subplots(1, state_dim, figsize=(12,4),sharex=True)
+true_val = np.ones_like(alpha)
+
+for i in range(state_dim):
+    axes[i].errorbar(alpha, xi[i, :], yerr=2 * sigi[i, :], fmt='o-', capsize=3, label='est ± 2σ')
+    axes[i].plot(alpha, true_val, linestyle='--', label='true value')
+    # only use log scale if alphai > 0
+    if np.all(alpha > 0):
+        axes[i].set_xscale('log')
+    axes[i].grid(True)
+    axes[i].set_xlabel('scale factor alpha')
+    axes[i].set_ylabel(f'state {i} estimate')
+
+axes[0].legend(loc='lower left')
+fig.suptitle(r'Study of sensor noise scale factor $\alpha$ ($R=\alpha R_0$)')
+plt.tight_layout()
+
 # Part (c): Varying prior
 
 Prior_list = np.array([alpha_i * P0 for alpha_i in alpha])
-print(np.shape(Prior_list))
 xhatC_list = []
 PxhatC_list = []
 for prior in Prior_list:
@@ -77,6 +107,32 @@ for prior in Prior_list:
 
 xhatC_list = np.array(xhatC_list)
 PxhatC_list = np.array(PxhatC_list)
+
+# Plot part (c)
+xhat = xhatC_list
+P = PxhatC_list
+
+xi = xhat.T
+sigi = np.array([np.sqrt(np.diag(P[a])) for a in range(N_alpha)]).T
+# Plot
+fig, axes = plt.subplots(1, state_dim, figsize=(12, 4), sharex=True)
+# change true_val if your true state isn't ones
+true_val = np.ones_like(alpha)
+
+for i in range(state_dim):
+    axes[i].errorbar(alpha, xi[i, :], yerr=2 * sigi[i, :], fmt='o-', capsize=3, label='est ± 2σ')
+    axes[i].plot(alpha, true_val, linestyle='--', label='true value')
+    if np.all(alpha > 0):
+        axes[i].set_xscale('log')
+    axes[i].grid(True)
+    axes[i].set_xlabel('scale factor (prior) α')
+    axes[i].set_ylabel(f'state {i} estimate')
+
+axes[0].legend(loc='lower left')
+fig.suptitle(r'Study of prior scale factor $\alpha$ (Prior = $\alpha P_0$)')
+plt.tight_layout()
+plt.show()
+
 
 # Need to make visualizations of matrix entries to show how
 # noise affects covariance, and then show how accurate estimation is for different \alpha values.

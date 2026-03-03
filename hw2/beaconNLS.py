@@ -107,9 +107,9 @@ def beaconNLS(z, R, x0, xS,xTrue=None):
             x_next = xi + dxhat
             xhat = np.hstack((xhat, x_next))
 
-            if abs(J_old - J.item()) < tol:
+            if abs(J_old - J) < tol:
                 break
-            J_old = J.item()
+            J_old = J
 
         PxhatF = np.linalg.inv(M1)
         xhatF = xhat[:, -1]
