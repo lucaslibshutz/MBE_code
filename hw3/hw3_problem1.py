@@ -94,36 +94,45 @@ plt.show()
 ### (a) KF using z_q1
 
 # Initialize variables
-xhatA = np.zeros((nx,nk))
-PxhatA = np.zeros((nx,nx,nk))
-xhatA[:,0] = np.zeros(nx) # initial state estimate
-PxhatA[:,:,0] = np.eye(nx) # initial error covariance
+xhat_pA = np.zeros((nx,nk))
+xhat_uA = np.zeros((nx,nk))
+xhat_pA[:,0] = x0 # initial state estimate
+xhat_uA[:,0] = x0 # initial state estimate
+# xhat_pA[:,0] = np.zeros(nx) # initial state estimate
+# xhat_uA[:,0] = np.zeros(nx) # initial state estimate
+Pxhat_pA = np.zeros((nx,nx,nk))
+Pxhat_uA = np.zeros((nx,nx,nk))
+Pxhat_pA[:,:,0] = np.eye(nx) # initial error covariance
+Pxhat_uA[:,:,0] = np.eye(nx) # initial error covariance
 Q = np.atleast_2d(Qsim) # process noise covariance
 # stack measurements into single array
 zA = np.vstack((z_q1,z_q5))
 
 for k in range(nk-1):
     # Prediction step
-    xPred = F @ xhatA[:,k]
-    PxPred = F @ PxhatA[:,:,k] @ F.T + G @ Q @ G.T
+    xhat_pA[:,k+1] = F @ xhat_uA[:,k]
+    Pxhat_pA[:,:,k+1] = F @ Pxhat_uA[:,:,k] @ F.T + G @ Q @ G.T
+
+    xPred = xhat_pA[:,k+1]
+    PxPred = Pxhat_pA[:,:,k+1]
 
     # Kalman Gain
     K_ins = Hc @ PxPred @ Hc.T + np.diag([Rq1, Rq5])
     K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
 
     # Update step
-    xhatA[:,k+1] = xPred + K @ (zA[:,k+1]- Hc@ xPred)
+    xhat_uA[:,k+1] = xPred + K @ (zA[:,k+1]- Hc@ xPred)
     # PxhatA[:, :, k+1] = (np.eye(nx) - K @ Hc) @ PxPred
     origTerm = np.eye(nx) - K @ Hc
-    PxhatA[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq1, Rq5]) @ K.T
+    Pxhat_uA[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq1, Rq5]) @ K.T
 
 
 # Plot results
 fig, axs = plt.subplots(1,2, figsize=(16,6))
 # plot_openloop(t, x_true[i1, :], z=z_q1, x_no_w=x_no_w[i1,:],ax=axs[0])
-plot_estimator(t, xhatA[i1,:], PxhatA[i1,i1,:],x_true[i1,:],plot_type='state',ax=axs[0])
+plot_estimator(t, xhat_uA[i1,:], Pxhat_uA[i1,i1,:],x_true[i1,:],plot_type='state',ax=axs[0])
 # plot_openloop(t, x_true[i5, :], z=z_q5, x_no_w=x_no_w[i5,:],ax=axs[1])
-plot_estimator(t, xhatA[i5,:], PxhatA[i5,i5,:],x_true[i5,:],plot_type='state',ax=axs[1])
+plot_estimator(t, xhat_uA[i5,:], Pxhat_uA[i5,i5,:],x_true[i5,:],plot_type='state',ax=axs[1])
 fig.tight_layout()
 plt.show()
 ### --------------------------------------
