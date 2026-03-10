@@ -8,8 +8,9 @@ from plot_openloop import plot_openloop
 from plot_estimator import plot_estimator
 
 # environment vars
-plot_A = 1
-plot_D = 0
+plot_I = 0
+plot_A = 0
+plot_D = 1
 
 # Define CT system
 k1 = k2 = k3 = k4 = k5 = 1
@@ -82,18 +83,19 @@ z_q1 = (Hq1 @ x_true + np.sqrt(Rq1) * np.random.randn(1,nk)).ravel() # scalar me
 z_q5 = (Hq5 @ x_true + np.sqrt(Rq5) * np.random.randn(1,nk)).ravel() # scalar measurement
 
 # open loop plots
-fig, axs = plt.subplots(1,2, figsize=(16,6))
+if plot_I:
+    fig, axs = plt.subplots(1,2, figsize=(16,6))
 
-plot_openloop(t, x_true[i1, :], z=z_q1, x_no_w=x_no_w[i1,:],ax=axs[0])
-axs[0].set_ylabel("position of first mass")
+    plot_openloop(t, x_true[i1, :], z=z_q1, x_no_w=x_no_w[i1,:],ax=axs[0])
+    axs[0].set_ylabel("position of first mass")
 
-plot_openloop(t, x_true[i5, :], z=z_q5, x_no_w=x_no_w[i5,:],ax=axs[1])
-axs[1].set_ylabel("position of fifth mass")
+    plot_openloop(t, x_true[i5, :], z=z_q5, x_no_w=x_no_w[i5,:],ax=axs[1])
+    axs[1].set_ylabel("position of fifth mass")
 
-fig.suptitle("Siimulated Response: 1st and 5th Masses",fontweight='bold')
+    fig.suptitle("Siimulated Response: 1st and 5th Masses",fontweight='bold')
 
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()
 
 ### --------------------------------------
 ### (a) KF using z_q1
@@ -217,6 +219,7 @@ Pxhat_uD[:,:,0] = Pbar # initial error covariance
 Q = np.atleast_2d(Qsim) # process noise covariance
 # stack measurements into single array
 zD = np.vstack((z_q1,z_q5))
+Kbar = Pbar @ Hc.T @ np.linalg.inv(Hc @ Pbar @ Hc.T + np.diag([Rq1, Rq5]))
 
 for k in range(nk-1):
     # Prediction step
@@ -228,7 +231,8 @@ for k in range(nk-1):
 
     # Kalman Gain
     K_ins = Hc @ PxPred @ Hc.T + np.diag([Rq1, Rq5])
-    K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
+    # K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
+    K = Kbar
 
     # Update step
     xhat_uD[:,k+1] = xPred + K @ (zD[:,k+1]- Hc@ xPred)
@@ -241,7 +245,16 @@ if plot_D:
     fig, axs = plt.subplots(1,2, figsize=(16,6))
     plot_estimator(t, xhat_uD[i1,:], Pxhat_uD[i1,i1,:],x_true[i1,:],plot_type='state',z=z_q1,ax=axs[0])
     plot_estimator(t, xhat_uD[i5,:], Pxhat_uD[i5,i5,:],x_true[i5,:],plot_type='state',z=z_q5,ax=axs[1])
-    axs[0].set_title("Steady State Covariance KF: 1st Mass")
-    axs[1].set_title("Steady State Covariance KF: 5th Mass")
+    axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass")
+    axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass")
     fig.tight_layout()
     plt.show()
+
+    fig, axs = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhat_pD[i1,:], Pxhat_pD[i1,i1,:],x_true[i1,:],plot_type='error',z=z_q1,ax=axs[0])
+    plot_estimator(t, xhat_pD[i5,:], Pxhat_pD[i5,i5,:],x_true[i5,:],plot_type='error',z=z_q5,ax=axs[1])
+    axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass Error")
+    axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass Error")
+    fig.tight_layout()
+    plt.show()
+
