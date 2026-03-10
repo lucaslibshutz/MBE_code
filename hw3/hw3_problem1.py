@@ -8,8 +8,8 @@ from plot_openloop import plot_openloop
 from plot_estimator import plot_estimator
 
 # environment vars
-plot_A = True
-plot_D = False
+plot_A = 1
+plot_D = 0
 
 # Define CT system
 k1 = k2 = k3 = k4 = k5 = 1
@@ -112,7 +112,9 @@ Pxhat_uA[:,:,0] = np.eye(nx,nx) # initial error covariance
 Q = np.atleast_2d(Qsim) # process noise covariance
 # stack measurements into single array
 zA = np.vstack((z_q1,z_q5))
+# zA = z_q1
 
+#WARNING: Two at once: is this fine?
 for k in range(nk-1):
     # Prediction step
     xhat_pA[:,k+1] = F @ xhat_uA[:,k]
@@ -122,14 +124,18 @@ for k in range(nk-1):
     PxPred = Pxhat_pA[:,:,k+1]
 
     # Kalman Gain
-    K_ins = Hc @ PxPred @ Hc.T + np.diag([Rq1, Rq5])
-    K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
+    K_ins = Hc @ PxPred @ Hc.T + np.diag([Rq1, Rq5]) # both masses
+    # K_ins = Hq1 @ PxPred @ Hq1.T + Rq1
+    K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins) # both masses
+    # K = (PxPred @ Hq1.T)@ np.linalg.inv(K_ins)
 
     # Update step
-    xhat_uA[:,k+1] = xPred + K @ (zA[:,k+1]- Hc@ xPred)
-    # PxhatA[:, :, k+1] = (np.eye(nx) - K @ Hc) @ PxPred
-    origTerm = np.eye(nx) - K @ Hc
-    Pxhat_uA[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq1, Rq5]) @ K.T
+    xhat_uA[:,k+1] = xPred + K @ (zA[:,k+1]- Hc@ xPred) # both masses
+    # xhat_uA[:,k+1] = xPred + K @ (zA[k+1]- Hq1@ xPred)
+    origTerm = np.eye(nx) - K @ Hc # both masses
+    # origTerm = np.eye(nx) - K @ Hq1
+    Pxhat_uA[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq1, Rq5]) @ K.T # both masses
+    # Pxhat_uA[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.atleast_2d(Rq1) @ K.T
 
 if plot_A:
     # Plot results
