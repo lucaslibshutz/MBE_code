@@ -218,8 +218,9 @@ Pxhat_pD[:,:,0] = Pbar # initial error covariance
 Pxhat_uD[:,:,0] = Pbar # initial error covariance
 Q = np.atleast_2d(Qsim) # process noise covariance
 # stack measurements into single array
-zD = np.vstack((z_q1,z_q5))
-Kbar = Pbar @ Hc.T @ np.linalg.inv(Hc @ Pbar @ Hc.T + np.diag([Rq1, Rq5]))
+# zD = np.vstack((z_q1,z_q5))
+zD = z_q5
+Kbar = Pbar @ Hq5.T @ np.linalg.inv(Hq5 @ Pbar @ Hq5.T + np.diag([Rq5]))
 
 for k in range(nk-1):
     # Prediction step
@@ -230,15 +231,15 @@ for k in range(nk-1):
     PxPred = Pxhat_pD[:,:,k+1]
 
     # Kalman Gain
-    K_ins = Hc @ PxPred @ Hc.T + np.diag([Rq1, Rq5])
+    K_ins = Hq5 @ PxPred @ Hq5.T + np.diag([Rq1, Rq5])
     # K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
     K = Kbar
 
     # Update step
-    xhat_uD[:,k+1] = xPred + K @ (zD[:,k+1]- Hc@ xPred)
+    xhat_uD[:,k+1] = xPred + K @ (zD[k+1]- Hq5@ xPred)
     # PxhatD[:, :, k+1] = (np.eye(nx) - K @ Hc) @ PxPred
-    origTerm = np.eye(nx) - K @ Hc
-    Pxhat_uD[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq1, Rq5]) @ K.T
+    origTerm = np.eye(nx) - K @ Hq5
+    Pxhat_uD[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq5]) @ K.T
 
 # Plot estimator for part (D)
 if plot_D:
@@ -251,8 +252,10 @@ if plot_D:
     plt.show()
 
     fig, axs = plt.subplots(1,2, figsize=(16,6))
-    plot_estimator(t, xhat_pD[i1,:], Pxhat_pD[i1,i1,:],x_true[i1,:],plot_type='error',z=z_q1,ax=axs[0])
+    plot_estimator(t, xhat_pD[i1,:], Pxhat_pD[i1,i1,:],x_true[i1,:],plot_type='error',ax=axs[0])
     plot_estimator(t, xhat_pD[i5,:], Pxhat_pD[i5,i5,:],x_true[i5,:],plot_type='error',z=z_q5,ax=axs[1])
+    axs[0].set_ylim([-0.1,0.1])
+    axs[1].set_ylim([-0.2,0.2])
     axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass Error")
     axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass Error")
     fig.tight_layout()
