@@ -36,7 +36,10 @@ def kalman_filter(
         K = (PxPred @ H.T)@ np.linalg.inv(K_ins) # both masses
 
         # Update step
-        xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
+        if z.ndim == 1:
+            xhat_U[:,k+1] = xPred + K @ (z[k+1]- H @ xPred) # both masses
+        else:
+            xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
         origTerm = np.eye(nx) - K @ H # both masses
         Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
     return xhat_P, xhat_U, Pxhat_P, Pxhat_U
