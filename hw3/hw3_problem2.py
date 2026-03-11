@@ -18,6 +18,7 @@ from scipy.stats import chi2
 from scipy.linalg import sqrtm, block_diag
 
 from plot_estimator import plot_estimator
+from kalmanFilter import kalman_filter
 
 np.random.seed(101)
 
@@ -97,15 +98,26 @@ plt.title("2D trajectory for aircraft A")
 # 
 
 ## YOUR CODE HERE
+xhatp, xhatu, Pp, Pu = kalman_filter(
+    F = F_A,
+    G = G_A,
+    H = H_A,
+    Q = Q_A,
+    R = R_A,
+    x0 = x0_A,
+    P0 = np.eye(nx),
+    z = z_A,
+    nk = nk
+)
 
 fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='state',z=z_A[0,:],ax=axs[0])
 axs[0].set_ylabel("North error estimate $e_N(t)$")
-plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='state',z=z_A[1,:],ax=axs[1])
 axs[1].set_ylabel("East error estimate $e_E(t)$")
 plt.suptitle("(a) Baseline Kalman Filter for aircraft A", fontweight='bold')
 plt.tight_layout()
-
+plt.show()
 
 # ============================================================
 # (b) 95% Measurement Gating
@@ -231,91 +243,90 @@ plt.title("(c) Kalman Filter integrity test statistic", fontweight='bold')
 # use measurements Z_A and Z_B for this problem
 
 # continuous time model for aircraft B
-Omega_B = -0.045
-A_B = np.array([[0,1,0,0],
-                [0,0,0,-Omega_B],
-                [0,0,0,1],
-                [0,Omega_B,0,0]])
-B_B = np.array([[0,0],[1,0],[0,0],[0,1]])
-
-# discrete time model for aircraft B
-F_B, G_B, _, _, _ = cont2discrete((A_B,B_B,np.eye(nx),0), dt)
-Q_B = Q_A
-R_B = R_A
-
-# simulate aircraft B
-x0_B = np.array([4000,85*np.cos(np.pi/4),3200,-85*np.sin(np.pi/4)])
-
-x_B = np.zeros((4,nk))
-x_B[:,0]=x0_B
-for k in range(nk-1):
-    x_B[:,k+1] = F_B@x_B[:,k] + G_B@w_A[:,k]
-
-z_B = H_A@x_B + sqrtm(R_B)@np.random.randn(2,nk)
-
-plot_openloop_2D_aircraft(x_A,x_B)
-
-## YOUR CODE HERE
-
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(d): Joint Kalman Filter: aircraft A errors", fontweight='bold')
-plt.tight_layout()
-
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(d): Joint Kalman Filter: aircraft B errors", fontweight='bold')
-plt.tight_layout()
-
-
-# ============================================================
-# (e) Joint Kalman Filter with Relative Range Sensor
-# ============================================================
-# goal: estimate X=[X_A;X_B] given Z=[z_A;z_B]
-#       --> repeat (d), but for a 2D range measurement
-# 
-# use both models for aircraft A and B for this problem
-# use measurements Zr for this problem
-
-Rr = np.array([[10,0.15],[0.15,10]])
-Hr = np.array([[1,0,0,0,-1,0,0,0],
-               [0,0,1,0,0,0,-1,0]])
-
-Zr = np.vstack((x_A[0,:]-x_B[0,:],
-                x_A[2,:]-x_B[2,:])) + sqrtm(Rr)@np.random.randn(2,nk)
-
-
-## YOUR CODE HERE
-
-
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
-plt.tight_layout()
-
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
-plt.tight_layout()
-
-plt.show()
+# Omega_B = -0.045
+# A_B = np.array([[0,1,0,0],
+#                 [0,0,0,-Omega_B],
+#                 [0,0,0,1],
+#                 [0,Omega_B,0,0]])
+# B_B = np.array([[0,0],[1,0],[0,0],[0,1]])
+#
+# # discrete time model for aircraft B
+# F_B, G_B, _, _, _ = cont2discrete((A_B,B_B,np.eye(nx),0), dt)
+# Q_B = Q_A
+# R_B = R_A
+#
+# # simulate aircraft B
+# x0_B = np.array([4000,85*np.cos(np.pi/4),3200,-85*np.sin(np.pi/4)])
+#
+# x_B = np.zeros((4,nk))
+# x_B[:,0]=x0_B
+# for k in range(nk-1):
+#     x_B[:,k+1] = F_B@x_B[:,k] + G_B@w_A[:,k]
+#
+# z_B = H_A@x_B + sqrtm(R_B)@np.random.randn(2,nk)
+#
+# plot_openloop_2D_aircraft(x_A,x_B)
+#
+# ## YOUR CODE HERE
+#
+# fig, axs = plt.subplots(1,2,figsize=(16,6))
+# plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+# axs[0].set_ylabel("North error estimate $e_N(t)$")
+# axs[0].legend()
+# plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+# axs[1].set_ylabel("East error estimate $e_E(t)$")
+# axs[1].legend()
+# plt.suptitle("(d): Joint Kalman Filter: aircraft A errors", fontweight='bold')
+# plt.tight_layout()
+#
+# fig, axs = plt.subplots(1,2,figsize=(16,6))
+# plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
+# axs[0].set_ylabel("North error estimate $e_N(t)$")
+# axs[0].legend()
+# plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
+# axs[1].set_ylabel("East error estimate $e_E(t)$")
+# axs[1].legend()
+# plt.suptitle("(d): Joint Kalman Filter: aircraft B errors", fontweight='bold')
+# plt.tight_layout()
+#
+#
+# # ============================================================
+# # (e) Joint Kalman Filter with Relative Range Sensor
+# # ============================================================
+# # goal: estimate X=[X_A;X_B] given Z=[z_A;z_B]
+# #       --> repeat (d), but for a 2D range measurement
+# # 
+# # use both models for aircraft A and B for this problem
+# # use measurements Zr for this problem
+#
+# Rr = np.array([[10,0.15],[0.15,10]])
+# Hr = np.array([[1,0,0,0,-1,0,0,0],
+#                [0,0,1,0,0,0,-1,0]])
+#
+# Zr = np.vstack((x_A[0,:]-x_B[0,:],
+#                 x_A[2,:]-x_B[2,:])) + sqrtm(Rr)@np.random.randn(2,nk)
+#
+#
+# ## YOUR CODE HERE
+#
+#
+# fig, axs = plt.subplots(1,2,figsize=(16,6))
+# plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+# axs[0].set_ylabel("North error estimate $e_N(t)$")
+# axs[0].legend()
+# plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+# axs[1].set_ylabel("East error estimate $e_E(t)$")
+# axs[1].legend()
+# plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
+# plt.tight_layout()
+#
+# fig, axs = plt.subplots(1,2,figsize=(16,6))
+# plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
+# axs[0].set_ylabel("North error estimate $e_N(t)$")
+# axs[0].legend()
+# plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
+# axs[1].set_ylabel("East error estimate $e_E(t)$")
+# axs[1].legend()
+# plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
+# plt.tight_layout()
+#
