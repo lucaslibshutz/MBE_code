@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.signal import cont2discrete
 from scipy.linalg import solve_discrete_are
-import addcopyfighandler
+import addcopyfighandler #noqa F401
 from kalmanFilter import kalman_filter
 
 from plot_openloop import plot_openloop
@@ -10,8 +10,8 @@ from plot_estimator import plot_estimator
 
 # environment vars
 plot_I = 0
-plot_A = 1
-plot_D = 0
+plot_A = 0
+plot_D = 1
 
 # Define CT system
 k1 = k2 = k3 = k4 = k5 = 1
@@ -159,11 +159,14 @@ if plot_A:
     ### --------------------------------------
     ### (b) Predicted vs Updated Covariances for mass 1 & 5
     ### --------------------------------------
+
+    # -- Mass 1 KF -- 
     fig,axs = plt.subplots(1,2, figsize=(16,6))
     plot_estimator(t, xhat_pA1[i1,:], Pxhat_pA1[i1,i1,:],x_true[i1,:],plot_type='error',ax=axs[0])
     plot_estimator(t, xhat_uA1[i1,:], Pxhat_uA1[i1,i1,:],x_true[i1,:],plot_type='error',z=z_q1,ax=axs[1])
     axs[0].set_title(r"Predicted Error $(q_1)$")
     axs[1].set_title(r"Updated Error $(q_1)$")
+    fig.suptitle("Mass 1 KF")
     fig.tight_layout()
     plt.show()
 
@@ -172,8 +175,29 @@ if plot_A:
     plot_estimator(t, xhat_uA1[i5,:], Pxhat_uA1[i5,i5,:],x_true[i5,:],plot_type='error',z=None,ax=axs[1])
     axs[0].set_title(r"Predicted Error $(q_5)$")
     axs[1].set_title(r"Updated Error $(q_5)$")
+    fig.suptitle("Mass 1 KF")
     fig.tight_layout()
     plt.show()
+
+    # -- Mass 5 KF --
+    fig,axs = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhat_pA5[i1,:], Pxhat_pA5[i1,i1,:],x_true[i1,:],plot_type='error',ax=axs[0])
+    plot_estimator(t, xhat_uA5[i1,:], Pxhat_uA5[i1,i1,:],x_true[i1,:],plot_type='error',z=None,ax=axs[1])
+    axs[0].set_title(r"Predicted Error $(q_1)$")
+    axs[1].set_title(r"Updated Error $(q_1)$")
+    fig.suptitle("Mass 5 KF")
+    fig.tight_layout()
+    plt.show()
+
+    fig,axs = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhat_pA5[i5,:], Pxhat_pA5[i5,i5,:],x_true[i5,:],plot_type='error',ax=axs[0])
+    plot_estimator(t, xhat_uA5[i5,:], Pxhat_uA5[i5,i5,:],x_true[i5,:],plot_type='error',z=z_q5,ax=axs[1])
+    axs[0].set_title(r"Predicted Error $(q_5)$")
+    axs[1].set_title(r"Updated Error $(q_5)$")
+    fig.suptitle("Mass 5 KF")
+    fig.tight_layout()
+    plt.show()
+
 
 
     # Plot variances and error of fifth mass for predicted and updated
@@ -206,65 +230,41 @@ print(f"Simulated measurement covariance for mass 5 at the final time is: {(Pxha
 print(f"Steady state error covariance for mass 5 is: {(Hq5 @ Pbar5 @ Hq5.T).astype(float)}")
 
 
-
 ### --------------------------------------
 ### (d) Constant gain KF
 ### --------------------------------------
 # Perform the same KF from (a), but this time use P0 = Pbar
-
 # Initialize variables
-# xhat_pD = np.zeros((nx,nk))
-# xhat_uD = np.zeros((nx,nk))
-# xhat_pD[:,0] = x0 # initial state estimate
-# xhat_uD[:,0] = x0 # initial state estimate
-# # xhat_pD[:,0] = np.zeros(nx) # initial state estimate
-# # xhat_uD[:,0] = np.zeros(nx) # initial state estimate
-# Pxhat_pD = np.zeros((nx,nx,nk))
-# Pxhat_uD = np.zeros((nx,nx,nk))
-# Pxhat_pD[:,:,0] = Pbar # initial error covariance
-# Pxhat_uD[:,:,0] = Pbar # initial error covariance
-# Q = np.atleast_2d(Qsim) # process noise covariance
-# # stack measurements into single array
-# # zD = np.vstack((z_q1,z_q5))
-# zD = z_q5
-# Kbar = Pbar @ Hq5.T @ np.linalg.inv(Hq5 @ Pbar @ Hq5.T + np.diag([Rq5]))
-#
-# for k in range(nk-1):
-#     # Prediction step
-#     xhat_pD[:,k+1] = F @ xhat_uD[:,k]
-#     Pxhat_pD[:,:,k+1] = F @ Pxhat_uD[:,:,k] @ F.T + G @ Q @ G.T
-#
-#     xPred = xhat_pD[:,k+1]
-#     PxPred = Pxhat_pD[:,:,k+1]
-#
-#     # Kalman Gain
-#     K_ins = Hq5 @ PxPred @ Hq5.T + np.diag([Rq1, Rq5])
-#     # K = (PxPred @ Hc.T)@ np.linalg.inv(K_ins)
-#     K = Kbar
-#
-#     # Update step
-#     xhat_uD[:,k+1] = xPred + K @ (zD[k+1]- Hq5@ xPred)
-#     # PxhatD[:, :, k+1] = (np.eye(nx) - K @ Hc) @ PxPred
-#     origTerm = np.eye(nx) - K @ Hq5
-#     Pxhat_uD[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ np.diag([Rq5]) @ K.T
-#
-# # Plot estimator for part (D)
-# if plot_D:
-#     fig, axs = plt.subplots(1,2, figsize=(16,6))
-#     plot_estimator(t, xhat_uD[i1,:], Pxhat_uD[i1,i1,:],x_true[i1,:],plot_type='state',z=z_q1,ax=axs[0])
-#     plot_estimator(t, xhat_uD[i5,:], Pxhat_uD[i5,i5,:],x_true[i5,:],plot_type='state',z=z_q5,ax=axs[1])
-#     axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass")
-#     axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass")
-#     fig.tight_layout()
-#     plt.show()
-#
-#     fig, axs = plt.subplots(1,2, figsize=(16,6))
-#     plot_estimator(t, xhat_pD[i1,:], Pxhat_pD[i1,i1,:],x_true[i1,:],plot_type='error',ax=axs[0])
-#     plot_estimator(t, xhat_pD[i5,:], Pxhat_pD[i5,i5,:],x_true[i5,:],plot_type='error',z=z_q5,ax=axs[1])
-#     axs[0].set_ylim([-0.1,0.1])
-#     axs[1].set_ylim([-0.2,0.2])
-#     axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass Error")
-#     axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass Error")
-#     fig.tight_layout()
-#     plt.show()
+xhat_pD, xhat_uD, Pxhat_pD, Pxhat_uD = kalman_filter(
+    F=F,
+    G=G,
+    H=Hq5,
+    Q=Qsim,
+    R=np.diag([Rq5]),
+    z=z_q5,
+    x0=x0,
+    P0=Pbar5,
+    nk=nk
+)
 
+Kbar = Pbar5 @ Hq5.T @ np.linalg.inv(Hq5 @ Pbar5 @ Hq5.T + np.diag([Rq5]))
+
+# Plot estimator for part (D)
+if plot_D:
+    fig, axs = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhat_uD[i1,:], Pxhat_uD[i1,i1,:],x_true[i1,:],plot_type='state',z=None,ax=axs[0])
+    plot_estimator(t, xhat_uD[i5,:], Pxhat_uD[i5,i5,:],x_true[i5,:],plot_type='state',z=z_q5,ax=axs[1])
+    axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass")
+    axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass")
+    fig.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhat_pD[i1,:], Pxhat_pD[i1,i1,:],x_true[i1,:],plot_type='error',ax=axs[0])
+    plot_estimator(t, xhat_pD[i5,:], Pxhat_pD[i5,i5,:],x_true[i5,:],plot_type='error',z=z_q5,ax=axs[1])
+    axs[0].set_ylim([-0.1,0.1])
+    axs[1].set_ylim([-0.2,0.2])
+    axs[0].set_title("Steady State Covariance & Gain KF: 1st Mass Error")
+    axs[1].set_title("Steady State Covariance & Gain KF: 5th Mass Error")
+    fig.tight_layout()
+    plt.show()
