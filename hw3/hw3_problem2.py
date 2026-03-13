@@ -28,8 +28,8 @@ plot_I = 0
 plot_A = 0
 plot_B = 0
 plot_C = 0
-plot_D = 1
-plot_E = 0
+plot_D = 0
+plot_E = 1
 
 # ============================================================
 # 2D Aircraft Open Loop Plot
@@ -480,5 +480,27 @@ if plot_E:
     axs[1].set_ylabel("East error estimate $e_E(t)$")
     axs[1].legend()
     plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_E[0,:],Pu_E[0,0,:],x_A[0,:],plot_type='state',z=z_A[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_E[2,:],Pu_E[2,2,:],x_A[2,:],plot_type='state',z=z_A[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(e): Joint KF with Relative Range: aircraft A state", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_E[nx+0,:],Pu_E[nx+0,nx+0,:],x_B[0,:],plot_type='state',z=z_B[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_E[nx+2,:],Pu_E[nx+2,nx+2,:],x_B[2,:],plot_type='state',z=z_B[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(e): Joint KF with Relative Range: aircraft B state", fontweight='bold')
     plt.tight_layout()
     plt.show()
