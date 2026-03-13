@@ -10,8 +10,8 @@ from plot_estimator import plot_estimator
 
 # environment vars
 plot_I = 0
-plot_A = 1
-plot_D = 0
+plot_A = 0
+plot_D = 1
 
 # Define CT system
 k1 = k2 = k3 = k4 = k5 = 1
