@@ -27,7 +27,9 @@ np.random.seed(101)
 plot_I = 0
 plot_A = 0
 plot_B = 0
-plot_C = 1
+plot_C = 0
+plot_D = 0
+plot_E = 0
 
 # ============================================================
 # 2D Aircraft Open Loop Plot
@@ -37,17 +39,16 @@ def plot_openloop_2D_aircraft(x_A, x_B=None):
 
     plt.figure(figsize=(8,6))
 
-    plt.plot(x_A[0,:], x_A[2,:], 'b-')
+    plt.plot(x_A[0,:], x_A[2,:], 'b-',label='Aircraft A')
     plt.plot(x_A[0,0], x_A[2,0], 'b>')
     plt.plot(x_A[0,-1], x_A[2,-1], marker='*', color='b')
 
     if x_B is not None:
-        plt.plot(x_B[0,:], x_B[2,:], 'r:')
+        plt.plot(x_B[0,:], x_B[2,:], 'r:',label='Aircraft B')
         plt.plot(x_B[0,0], x_B[2,0], 'r>')
         plt.plot(x_B[0,-1], x_B[2,-1], marker='*', color='r')
-        plt.legend(["Aircraft A","Aircraft B"])
-    else:
-        plt.legend(["Aircraft A"])
+
+    plt.legend()
 
     plt.xlabel("East")
     plt.ylabel("North")
@@ -332,6 +333,7 @@ B_B = np.array([[0,0],[1,0],[0,0],[0,1]])
 F_B, G_B, _, _, _ = cont2discrete((A_B,B_B,np.eye(nx),0), dt)
 Q_B = Q_A
 R_B = R_A
+H_B = -H_A
 
 # simulate aircraft B
 x0_B = np.array([4000,85*np.cos(np.pi/4),3200,-85*np.sin(np.pi/4)])
@@ -341,31 +343,55 @@ x_B[:,0]=x0_B
 for k in range(nk-1):
     x_B[:,k+1] = F_B@x_B[:,k] + G_B@w_A[:,k]
 
-z_B = H_A@x_B + sqrtm(R_B)@np.random.randn(2,nk)
+z_B = H_B@x_B + sqrtm(R_B)@np.random.randn(2,nk)
+
+F_totD = block_diag(F_A,F_B)
+G_totD = block_diag(G_A,G_B)
+H_totD = np.hstack((H_A,H_B))
+Q_totD = block_diag(Q_A,Q_B)
+R_totD = block_diag(R_A,R_B)
+x0_totD = np.vstack((x0_A,x0_B))
+z_totD = np.vstack((z_A,z_B))
 
 plot_openloop_2D_aircraft(x_A,x_B)
+plt.show()
+
+xhatp_D, xhatu_D, Pp_D, Pu_D = kalman_filter(
+    F = F_totD,
+    G = G_totD,
+    H = H_totD,
+    Q = Q_totD,
+    R = R_totD,
+    x0 = x0_totD,
+    P0 = np.eye(2*nx),
+    z = z_totD,
+    nk = nk
+)
 
 ## YOUR CODE HERE
 
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(d): Joint Kalman Filter: aircraft A errors", fontweight='bold')
-plt.tight_layout()
+if plot_D:
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_D[0,:],Pu_D[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_D[2,:],Pu_D[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(d): Joint Kalman Filter: aircraft A errors", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
 
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(d): Joint Kalman Filter: aircraft B errors", fontweight='bold')
-plt.tight_layout()
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_D[nx+0,:],Pu_D[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_D[nx+2,:],Pu_D[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(d): Joint Kalman Filter: aircraft B errors", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
 
 
 # ============================================================
@@ -388,23 +414,25 @@ Zr = np.vstack((x_A[0,:]-x_B[0,:],
 ## YOUR CODE HERE
 
 
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
-plt.tight_layout()
-
-fig, axs = plt.subplots(1,2,figsize=(16,6))
-plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
-axs[0].set_ylabel("North error estimate $e_N(t)$")
-axs[0].legend()
-plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
-axs[1].set_ylabel("East error estimate $e_E(t)$")
-axs[1].legend()
-plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
-plt.tight_layout()
-
+# if plot_E:
+#     fig, axs = plt.subplots(1,2,figsize=(16,6))
+#     plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+#     axs[0].set_ylabel("North error estimate $e_N(t)$")
+#     axs[0].legend()
+#     plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+#     axs[1].set_ylabel("East error estimate $e_E(t)$")
+#     axs[1].legend()
+#     plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
+#     plt.tight_layout()
+#     plt.show()
+#
+#     fig, axs = plt.subplots(1,2,figsize=(16,6))
+#     plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
+#     axs[0].set_ylabel("North error estimate $e_N(t)$")
+#     axs[0].legend()
+#     plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
+#     axs[1].set_ylabel("East error estimate $e_E(t)$")
+#     axs[1].legend()
+#     plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
+#     plt.tight_layout()
+#     plt.show()
