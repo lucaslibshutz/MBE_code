@@ -10,8 +10,8 @@ from plot_estimator import plot_estimator
 
 # environment vars
 plot_I = 0
-plot_A = 0
-plot_D = 1
+plot_A = 1
+plot_D = 0
 
 # Define CT system
 k1 = k2 = k3 = k4 = k5 = 1
@@ -109,7 +109,7 @@ xhat_pA1, xhat_uA1, Pxhat_pA1, Pxhat_uA1 = kalman_filter(
     R=np.diag([Rq1]),
     z=z_q1,
     x0=x0,
-    P0=np.eye(nx),
+    P0=1/4*np.eye(nx),
     nk=nk
 )
 
@@ -121,7 +121,7 @@ xhat_pA5, xhat_uA5, Pxhat_pA5, Pxhat_uA5 = kalman_filter(
     R=np.diag([Rq5]),
     z=z_q5,
     x0=x0,
-    P0=np.eye(nx),
+    P0=1/4*np.eye(nx),
     nk=nk
 )
 
@@ -155,10 +155,6 @@ if plot_A:
     plt.show()
 
 
-
-    ### --------------------------------------
-    ### (b) Predicted vs Updated Covariances for mass 1 & 5
-    ### --------------------------------------
 
     # -- Mass 1 KF -- 
     fig,axs = plt.subplots(1,2, figsize=(16,6))
@@ -198,7 +194,9 @@ if plot_A:
     fig.tight_layout()
     plt.show()
 
-
+    ### --------------------------------------
+    ### (b) Predicted vs Updated Covariances for mass 1 & 5
+    ### --------------------------------------
 
     # Plot variances and error of fifth mass for predicted and updated
     fig, axs = plt.subplots(1,2, figsize=(16,6))
@@ -214,6 +212,7 @@ if plot_A:
     axs[1].set_xlabel("Time (s)")
     axs[1].set_ylabel(r"$\sigma^2(m_5)$")
     axs[1].legend()
+    fig.suptitle("Mass 1 KF: Predicted vs Updated Variance",fontweight='bold')
     fig.tight_layout()
     plt.show()
 
