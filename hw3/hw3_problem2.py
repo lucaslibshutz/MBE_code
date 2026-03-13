@@ -26,10 +26,10 @@ np.random.seed(101)
 ## Environment vars for plotting
 plot_I = 0
 plot_A = 0
-plot_B = 0
-plot_C = 0
+plot_B = 1
+plot_C = 1
 plot_D = 0
-plot_E = 1
+plot_E = 0
 
 # ============================================================
 # 2D Aircraft Open Loop Plot
@@ -224,18 +224,7 @@ x0_C = x_c[:,0]
 C_factor = 10
 Q_C = C_factor * Q_A
 
-# rerun new KF on this data
-xhatp_C, xhatu_C, Pp_C, Pu_C = kalman_filter(
-    F = F_A,
-    G = G_A,
-    H = H_A,
-    Q = Q_C,
-    R = R_A,
-    x0 = x0_C,
-    P0 = np.eye(nx),
-    z = z_c,
-    nk = nk
-)
+
 
 Nrej = 0
 Irej = []
@@ -252,7 +241,20 @@ LamF = np.zeros(nk)
 win=10
 Blow = chi2.ppf(0.025,10*2)/win
 Bhigh = chi2.ppf(0.975,10*2)/win
-
+#
+# rerun new KF on this data
+xhatp_C, xhatu_C, Pp_C, Pu_C = kalman_filter(
+    F = F_A,
+    G = G_A,
+    H = H_A,
+    Q = Q_C,
+    R = R_A,
+    x0 = x0_C,
+    P0 = np.eye(nx),
+    z = z_c,
+    nk = nk,
+    Lambda0 = Lam0 # adding in meaasurement rejection
+)
 ## YOUR CODE HERE
 for k in range(nk-1):
     inn = z_c[:,k+1] - H_A @ xhatp_C[:,k+1]
@@ -260,6 +262,7 @@ for k in range(nk-1):
 
     Lam[k+1] = inn.T @ np.linalg.inv(S) @ inn
 
+    # update measurement only if gating passes
     if Lam[k+1] > Lam0:
         Nrej += 1
         Irej.append(k+1)
@@ -362,8 +365,6 @@ print(f"x0_totD shape: {x0_totD.shape}")
 print(f"z_totD shape: {z_totD.shape}")
 print("nk:", nk)
 
-plot_openloop_2D_aircraft(x_A,x_B)
-plt.show()
 
 ## YOUR CODE HERE
 xhatp_D, xhatu_D, Pp_D, Pu_D = kalman_filter(
@@ -380,6 +381,9 @@ xhatp_D, xhatu_D, Pp_D, Pu_D = kalman_filter(
 
 
 if plot_D:
+    plot_openloop_2D_aircraft(x_A,x_B)
+    plt.show()
+
     fig, axs = plt.subplots(1,2,figsize=(16,6))
     plot_estimator(tvec,xhatu_D[0,:],Pu_D[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
     axs[0].set_ylabel("North error estimate $e_N(t)$")

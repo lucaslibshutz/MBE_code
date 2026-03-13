@@ -11,7 +11,8 @@ def kalman_filter(
     P0: np.ndarray,
     z: np.ndarray,
     nk: int,
-    Kbar: np.ndarray = None
+    Kbar: np.ndarray = None,
+    Lambda0: ArrayLike = None
 ):
     nx = np.shape(x0)[0]
     xhat_P = np.zeros((nx, nk))
@@ -41,9 +42,32 @@ def kalman_filter(
 
         # Update step
         if z.ndim == 1:
-            xhat_U[:,k+1] = xPred + K @ (z[k+1]- H @ xPred) # both masses
+            if Lambda0 is not None:
+                inn = z[k+1] - H @ xPred
+                S = H @ PxPred @ H.T + R
+                Lam = inn.T @ np.linalg.inv(S) @ inn
+                if Lam > Lambda0:
+                    xhat_U[:,k+1] = xhat_P[:,k+1]
+                    Pxhat_U[:,:,k+1] = Pxhat_P[:,:,k+1]
+                else:
+                    xhat_U[:,k+1] = xPred + K @ inn # both masses
+                    origTerm = np.eye(nx) - K @ H # both masses
+                    Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
+            else:
+                xhat_U[:,k+1] = xPred + K @ (z[k+1]- H @ xPred) # both masses
         else:
-            xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
-        origTerm = np.eye(nx) - K @ H # both masses
-        Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
+            if Lambda0 is not None:
+                inn = z[:,k+1] - H @ xPred
+                S = H @ PxPred @ H.T + R
+                Lam = inn.T @ np.linalg.inv(S) @ inn
+                if Lam > Lambda0:
+                    xhat_U[:,k+1] = xhat_P[:,k+1]
+                    Pxhat_U[:,:,k+1] = Pxhat_P[:,:,k+1]
+                else:
+                    xhat_U[:,k+1] = xPred + K @ inn # both masses
+                    origTerm = np.eye(nx) - K @ H # both masses
+                    Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
+            # xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
+            # origTerm = np.eye(nx) - K @ H # both masses
+            # Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
     return xhat_P, xhat_U, Pxhat_P, Pxhat_U
