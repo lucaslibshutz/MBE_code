@@ -55,6 +55,9 @@ def kalman_filter(
                     Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
             else:
                 xhat_U[:,k+1] = xPred + K @ (z[k+1]- H @ xPred) # both masses
+                origTerm = np.eye(nx) - K @ H # both masses
+                Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
+
         else:
             if Lambda0 is not None:
                 inn = z[:,k+1] - H @ xPred
@@ -67,7 +70,8 @@ def kalman_filter(
                     xhat_U[:,k+1] = xPred + K @ inn # both masses
                     origTerm = np.eye(nx) - K @ H # both masses
                     Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
-            # xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
-            # origTerm = np.eye(nx) - K @ H # both masses
-            # Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
+            else:
+                xhat_U[:,k+1] = xPred + K @ (z[:,k+1]- H @ xPred) # both masses
+                origTerm = np.eye(nx) - K @ H # both masses
+                Pxhat_U[:, :, k+1] = origTerm @ PxPred @ origTerm.T + K @ R @ K.T # both masses
     return xhat_P, xhat_U, Pxhat_P, Pxhat_U

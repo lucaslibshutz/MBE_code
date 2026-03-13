@@ -255,10 +255,24 @@ xhatp_C, xhatu_C, Pp_C, Pu_C = kalman_filter(
     nk = nk,
     Lambda0 = Lam0 # adding in meaasurement rejection
 )
+
+# also define un-rejected KF for ground truth to be simulated with
+xhatp_C2, xhatu_C2, Pp_C2, Pu_C2 = kalman_filter(
+    F = F_A,
+    G = G_A,
+    H = H_A,
+    Q = Q_C,
+    R = R_A,
+    x0 = x0_C,
+    P0 = np.eye(nx),
+    z = z_c,
+    nk = nk,
+)
 ## YOUR CODE HERE
+#NOTE: rejection already happened 
 for k in range(nk-1):
-    inn = z_c[:,k+1] - H_A @ xhatp_C[:,k+1]
-    S = H_A @ Pp_C[:,:,k+1] @ H_A.T + R_A
+    inn = z_c[:,k+1] - H_A @ xhatp_C2[:,k+1]
+    S = H_A @ Pp_C2[:,:,k+1] @ H_A.T + R_A
 
     Lam[k+1] = inn.T @ np.linalg.inv(S) @ inn
 
@@ -272,7 +286,6 @@ for k in range(nk-1):
     if (LamF[k+1] < Blow) or (LamF[k+1] > Bhigh):
         NFrej += 1
         IFrej.append(k+1)
-
 
 # uncomment lines below to output the percent of msmts rejected
 print("(c) percent msmts rejected:",Nrej/nk*100)
