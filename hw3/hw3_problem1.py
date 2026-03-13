@@ -11,6 +11,7 @@ from plot_estimator import plot_estimator
 # environment vars
 plot_I = 0
 plot_A = 0
+plot_B = 1
 plot_D = 1
 
 # Define CT system
@@ -198,21 +199,22 @@ if plot_A:
     ### (b) Predicted vs Updated Covariances for mass 1 & 5
     ### --------------------------------------
 
+if plot_B:
     # Plot variances and error of fifth mass for predicted and updated
     fig, axs = plt.subplots(1,2, figsize=(16,6))
 
-    axs[0].semilogy(t, Pxhat_pA1[i1,i1,:], 'r',label='Predicted')
-    axs[0].semilogy(t, Pxhat_uA1[i1,i1,:], 'b',label='Updated')
+    axs[0].semilogy(t, Pxhat_pA5[i1,i1,:], 'r',label='Predicted')
+    axs[0].semilogy(t, Pxhat_uA5[i1,i1,:], 'b',label='Updated')
     axs[0].set_xlabel("Time (s)")
     axs[0].set_ylabel(r"$\sigma^2(m_1)$")
     axs[0].legend()
 
-    axs[1].semilogy(t, Pxhat_pA1[i5,i5,:],'r', label='Predicted')
-    axs[1].semilogy(t, Pxhat_uA1[i5,i5,:],'b', label='Updated')
+    axs[1].semilogy(t, Pxhat_pA5[i5,i5,:],'r', label='Predicted')
+    axs[1].semilogy(t, Pxhat_uA5[i5,i5,:],'b', label='Updated')
     axs[1].set_xlabel("Time (s)")
     axs[1].set_ylabel(r"$\sigma^2(m_5)$")
     axs[1].legend()
-    fig.suptitle("Mass 1 KF: Predicted vs Updated Variance",fontweight='bold')
+    fig.suptitle("Mass 5 KF: Predicted vs Updated Variance",fontweight='bold')
     fig.tight_layout()
     plt.show()
 
