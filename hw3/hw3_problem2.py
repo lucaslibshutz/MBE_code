@@ -28,7 +28,7 @@ plot_I = 0
 plot_A = 0
 plot_B = 0
 plot_C = 0
-plot_D = 0
+plot_D = 1
 plot_E = 0
 
 # ============================================================
@@ -333,7 +333,7 @@ B_B = np.array([[0,0],[1,0],[0,0],[0,1]])
 F_B, G_B, _, _, _ = cont2discrete((A_B,B_B,np.eye(nx),0), dt)
 Q_B = Q_A
 R_B = R_A
-H_B = -H_A
+H_B = H_A
 
 # simulate aircraft B
 x0_B = np.array([4000,85*np.cos(np.pi/4),3200,-85*np.sin(np.pi/4)])
@@ -347,15 +347,25 @@ z_B = H_B@x_B + sqrtm(R_B)@np.random.randn(2,nk)
 
 F_totD = block_diag(F_A,F_B)
 G_totD = block_diag(G_A,G_B)
-H_totD = np.hstack((H_A,H_B))
+H_totD = block_diag(H_A,H_B)
 Q_totD = block_diag(Q_A,Q_B)
 R_totD = block_diag(R_A,R_B)
-x0_totD = np.vstack((x0_A,x0_B))
+x0_totD = np.hstack((x0_A,x0_B))
 z_totD = np.vstack((z_A,z_B))
+
+print(f"F_totD shape: {F_totD.shape}")
+print(f"G_totD shape: {G_totD.shape}")
+print(f"H_totD shape: {H_totD.shape}")
+print(f"Q_totD shape: {Q_totD.shape}")
+print(f"R_totD shape: {R_totD.shape}")
+print(f"x0_totD shape: {x0_totD.shape}")
+print(f"z_totD shape: {z_totD.shape}")
+print("nk:", nk)
 
 plot_openloop_2D_aircraft(x_A,x_B)
 plt.show()
 
+## YOUR CODE HERE
 xhatp_D, xhatu_D, Pp_D, Pu_D = kalman_filter(
     F = F_totD,
     G = G_totD,
@@ -368,7 +378,6 @@ xhatp_D, xhatu_D, Pp_D, Pu_D = kalman_filter(
     nk = nk
 )
 
-## YOUR CODE HERE
 
 if plot_D:
     fig, axs = plt.subplots(1,2,figsize=(16,6))
@@ -393,6 +402,30 @@ if plot_D:
     plt.tight_layout()
     plt.show()
 
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_D[0,:],Pu_D[0,0,:],x_A[0,:],plot_type='state',z=z_A[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_D[2,:],Pu_D[2,2,:],x_A[2,:],plot_type='state',z=z_A[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(d): Joint Kalman Filter: aircraft A state", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_D[nx+0,:],Pu_D[nx+0,nx+0,:],x_B[0,:],plot_type='state',z=z_B[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_D[nx+2,:],Pu_D[nx+2,nx+2,:],x_B[2,:],plot_type='state',z=z_B[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(d): Joint Kalman Filter: aircraft B state", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    print(f"Final covaraince matrix: {Pu_D[:,:,-1]}")
+
 
 # ============================================================
 # (e) Joint Kalman Filter with Relative Range Sensor
@@ -411,28 +444,41 @@ Zr = np.vstack((x_A[0,:]-x_B[0,:],
                 x_A[2,:]-x_B[2,:])) + sqrtm(Rr)@np.random.randn(2,nk)
 
 
+# we only will have a range measurement, so:
+xhatp_E, xhatu_E, Pp_E, Pu_E = kalman_filter(
+    F = F_totD,
+    G = G_totD,
+    H = Hr,
+    Q = Q_totD,
+    R = Rr,
+    x0 = x0_totD,
+    P0 = np.eye(2*nx),
+    z = Zr,
+    nk = nk
+
+)
 ## YOUR CODE HERE
 
 
-# if plot_E:
-#     fig, axs = plt.subplots(1,2,figsize=(16,6))
-#     plot_estimator(tvec,xhatu[0,:],Pu[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
-#     axs[0].set_ylabel("North error estimate $e_N(t)$")
-#     axs[0].legend()
-#     plot_estimator(tvec,xhatu[2,:],Pu[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
-#     axs[1].set_ylabel("East error estimate $e_E(t)$")
-#     axs[1].legend()
-#     plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
-#     plt.tight_layout()
-#     plt.show()
-#
-#     fig, axs = plt.subplots(1,2,figsize=(16,6))
-#     plot_estimator(tvec,xhatu[nx+0,:],Pu[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
-#     axs[0].set_ylabel("North error estimate $e_N(t)$")
-#     axs[0].legend()
-#     plot_estimator(tvec,xhatu[nx+2,:],Pu[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
-#     axs[1].set_ylabel("East error estimate $e_E(t)$")
-#     axs[1].legend()
-#     plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
-#     plt.tight_layout()
-#     plt.show()
+if plot_E:
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_E[0,:],Pu_E[0,0,:],x_A[0,:],plot_type='error',z=z_A[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_E[2,:],Pu_E[2,2,:],x_A[2,:],plot_type='error',z=z_A[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(e): Joint KF with Relative Range: aircraft A errors", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(1,2,figsize=(16,6))
+    plot_estimator(tvec,xhatu_E[nx+0,:],Pu_E[nx+0,nx+0,:],x_B[0,:],plot_type='error',z=z_B[0,:],ax=axs[0])
+    axs[0].set_ylabel("North error estimate $e_N(t)$")
+    axs[0].legend()
+    plot_estimator(tvec,xhatu_E[nx+2,:],Pu_E[nx+2,nx+2,:],x_B[2,:],plot_type='error',z=z_B[1,:],ax=axs[1])
+    axs[1].set_ylabel("East error estimate $e_E(t)$")
+    axs[1].legend()
+    plt.suptitle("(e): Joint KF with Relative Range: aircraft B errors", fontweight='bold')
+    plt.tight_layout()
+    plt.show()
