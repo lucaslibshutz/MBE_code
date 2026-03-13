@@ -232,8 +232,9 @@ print(f"Steady state error covariance for mass 5 is: {(Hq5 @ Pbar5 @ Hq5.T).asty
 ### --------------------------------------
 ### (d) Constant gain KF
 ### --------------------------------------
-# Perform the same KF from (a), but this time use P0 = Pbar
+# Perform the same KF from (a), but this time use P0 = Pbar, and constant Kalman gain Kbar = Pbar @ H.T @ inv(H @ Pbar @ H.T + R)
 # Initialize variables
+Kbar = Pbar5 @ Hq5.T @ np.linalg.inv(Hq5 @ Pbar5 @ Hq5.T + np.diag([Rq5]))
 xhat_pD, xhat_uD, Pxhat_pD, Pxhat_uD = kalman_filter(
     F=F,
     G=G,
@@ -243,10 +244,10 @@ xhat_pD, xhat_uD, Pxhat_pD, Pxhat_uD = kalman_filter(
     z=z_q5,
     x0=x0,
     P0=Pbar5,
-    nk=nk
+    nk=nk,
+    Kbar=Kbar
 )
 
-Kbar = Pbar5 @ Hq5.T @ np.linalg.inv(Hq5 @ Pbar5 @ Hq5.T + np.diag([Rq5]))
 
 # Plot estimator for part (D)
 if plot_D:
