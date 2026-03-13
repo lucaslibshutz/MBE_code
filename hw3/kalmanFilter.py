@@ -10,7 +10,8 @@ def kalman_filter(
     x0: np.ndarray,
     P0: np.ndarray,
     z: np.ndarray,
-    nk: int
+    nk: int,
+    Kbar: np.ndarray = None
 ):
     nx = np.shape(x0)[0]
     xhat_P = np.zeros((nx, nk))
@@ -33,7 +34,10 @@ def kalman_filter(
 
         # Kalman Gain
         K_ins = H @ PxPred @ H.T + R # both masses
-        K = (PxPred @ H.T)@ np.linalg.inv(K_ins) # both masses
+        if Kbar is not None:
+            K = Kbar
+        else:
+            K = (PxPred @ H.T)@ np.linalg.inv(K_ins) # both masses
 
         # Update step
         if z.ndim == 1:
