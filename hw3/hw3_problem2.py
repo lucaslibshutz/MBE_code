@@ -17,6 +17,7 @@ from scipy.signal import cont2discrete
 from scipy.stats import chi2
 from scipy.linalg import sqrtm, block_diag
 import addcopyfighandler #noqa F401
+from plot_covariance import plot_covariance_matrix
 
 from plot_estimator import plot_estimator
 from kalmanFilter import kalman_filter
@@ -25,11 +26,11 @@ np.random.seed(101)
 
 ## Environment vars for plotting
 plot_I = 0
-plot_A = 0
+plot_A = 1
 plot_B = 1
 plot_C = 1
-plot_D = 0
-plot_E = 0
+plot_D = 1
+plot_E = 1
 
 # ============================================================
 # 2D Aircraft Open Loop Plot
@@ -441,7 +442,13 @@ if plot_D:
     plt.tight_layout()
     plt.show()
 
-    print(f"Final covaraince matrix: {Pu_D[:,:,-1]}")
+    # print(f"Final covaraince matrix: {Pu_D[:,:,-1]}")
+    labels = [
+        "1","1","1","1",
+        "2","2","2","2",
+    ]
+    plot_covariance_matrix(Pu_D[:,:,-1],labels)
+    print(f"Covariance dimensions: {np.shape(Pu_D[:,:,-1])}")
 
 
 # ============================================================
