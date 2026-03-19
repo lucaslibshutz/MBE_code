@@ -14,6 +14,7 @@ Problem #1: Extended Kalman Filter (EKF)
 
 import numpy as np
 import matplotlib.pyplot as plt
+import addcopyfighandler
 
 from plot_estimator import plot_estimator
 from calculate_ellipse import calculate_ellipse
@@ -32,14 +33,49 @@ np.random.seed(100)
 
 def predict_state_carposebias(Xk, U, dt):
 
-    ##YOUR CODE HERE
+    v_k = Xk[2]
+    theta_k = Xk[3]
+    b_a = Xk[4]
+    b_rg = Xk[5]
+
+    # get accel and ang velocity
+    acc = U[0]
+    omegadot = U[1]
+
+    Xkp1 = Xk + dt*np.array([
+        Vk*np.cos(theta_k),
+        Vk*np.sin(theta_k),
+        acc-b_a,
+        omegadot-b_rg,
+        0.0,
+        0.0
+    ])
 
     return Xkp1
 
 
 def getFG_carposebias(X, dt):
 
-    ##YOUR CODE HERE
+    v_k = X[2]
+    theta_k = X[3]
+
+    F = np.array([
+        [1,0, dt*v_k*np.cos(theta_k), -dt*v_k*np.sin(theta_k),0,0],
+        [0,1,dt*v_k*np.sin(theta_k), dt*v_k*np.cos(theta_k),0,0],
+        [0,0,1,0,-dt,0],
+        [0,0,0,1,0,-dt],
+        [0,0,0,0,1,0],
+        [0,0,0,0,0,1]
+    ])
+
+    G = np.array([
+        [0,0],
+        [0,0],
+        [dt,0],
+        [0,dt],
+        [0,0],
+        [0,0],
+    ])
 
     return F, G
 
@@ -147,6 +183,7 @@ plt.legend(["velocity (m/sec)", "heading (rad)"], loc="lower left")
 plt.axis([0, nt*dt, -2, 6.5])
 plt.grid(True)
 plt.tight_layout()
+plt.show()
 
 # ------------------------------------------------------------
 # Generate noise and measurements
@@ -180,7 +217,25 @@ H = np.hstack((np.eye(2), np.zeros((2,4))))
 # Extended Kalman Filter (EKF)
 # ------------------------------------------------------------
 
-    ##YOUR CODE HERE
+x0 = np.zeros(nx)
+P0 = np.diag([2**2, 2**2, 1**2, 0.1**2, 0.5**2, 0.05**2])
+xhatu = np.zeros((nx, nt))
+xhatp = np.zeros((nx, nt))
+xhatu[:,0] = x0
+xhatp[:,0] = x0
+Pu = np.zeros((nx, nx, nt))
+Pp = np.zeros((nx, nx, nt))
+Pu[:,:,0] = P0
+Pp[:,:,0] = P0
+
+for k in range(nt-1):
+    xhatp[:,k+1] = predict_state_carposebias(xhatu[:,k], np.array([Uacc[k], Uomega[k]]), dt)
+    F, G = getFG_carposebias(xhatu[:,k], dt)
+    Pp[:,:,k+1] = F @ Pu[:,:,k] @ F.T + G @ Q @ G.T
+    K = Pp[:,:,k+1] @ H.T @ np.linalg.inv(H @ Pp[:,:,k+1] @ H.T + R)
+
+    xhatu[:,k+1] = xhatp[:,k+1] + K @ (z[:,k+1] - H @ xhatp[:,k+1])
+    Pu[:,:,k+1] = (np.eye(nx) - K @ H) @ Pp[:,:,k+1] @ (np.eye(nx) - K @ H).T + K @ R @ K.T
 
 # ---------------------------------------------------------
 # Estimator plots
