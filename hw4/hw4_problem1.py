@@ -25,7 +25,7 @@ from calculate_ellipse import calculate_ellipse
 scenario_type = "baseline"
 # scenario_type = "swervy"
 
-np.random.seed(100)
+np.random.seed(16)
 
 # ------------------------------------------------------------
 # System model functions
