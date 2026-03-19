@@ -22,8 +22,8 @@ from calculate_ellipse import calculate_ellipse
 # -------------------------------------------------
 # User input parameters
 # -------------------------------------------------
-# scenario_type = "baseline"
-scenario_type = "swervy"
+scenario_type = "baseline"
+# scenario_type = "swervy"
 
 np.random.seed(100)
 
@@ -43,8 +43,8 @@ def predict_state_carposebias(Xk, U, dt):
     omegadot = U[1]
 
     Xkp1 = Xk + dt*np.array([
-        Vk*np.cos(theta_k),
-        Vk*np.sin(theta_k),
+        v_k*np.cos(theta_k),
+        v_k*np.sin(theta_k),
         acc-b_a,
         omegadot-b_rg,
         0.0,
@@ -60,8 +60,8 @@ def getFG_carposebias(X, dt):
     theta_k = X[3]
 
     F = np.array([
-        [1,0, dt*v_k*np.cos(theta_k), -dt*v_k*np.sin(theta_k),0,0],
-        [0,1,dt*v_k*np.sin(theta_k), dt*v_k*np.cos(theta_k),0,0],
+        [1,0, dt*np.cos(theta_k), -dt*v_k*np.sin(theta_k),0,0],
+        [0,1,dt*np.sin(theta_k), dt*v_k*np.cos(theta_k),0,0],
         [0,0,1,0,-dt,0],
         [0,0,0,1,0,-dt],
         [0,0,0,0,1,0],
@@ -229,7 +229,7 @@ Pu[:,:,0] = P0
 Pp[:,:,0] = P0
 
 for k in range(nt-1):
-    xhatp[:,k+1] = predict_state_carposebias(xhatu[:,k], np.array([Uacc[k], Uomega[k]]), dt)
+    xhatp[:,k+1] = predict_state_carposebias(xhatu[:,k], np.array([Zacc[k], Zrg[k]]), dt)
     F, G = getFG_carposebias(xhatu[:,k], dt)
     Pp[:,:,k+1] = F @ Pu[:,:,k] @ F.T + G @ Q @ G.T
     K = Pp[:,:,k+1] @ H.T @ np.linalg.inv(H @ Pp[:,:,k+1] @ H.T + R)
