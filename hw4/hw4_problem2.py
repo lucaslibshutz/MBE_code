@@ -54,8 +54,7 @@ def predict_state_vdp_euler(Xk, mu, tk, tkp1):
     Discrete prediction of state at k+1 via Euler integration.
     Xk is an (nx x nsp) array.
     """
-    
-    ## YOUR CODE HERE
+    Xkp1 = Xk + (tkp1-tk) * vanderpol(tk, Xk, mu, w=0.0)
     
     return Xkp1
 
