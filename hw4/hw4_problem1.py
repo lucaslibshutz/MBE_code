@@ -18,12 +18,15 @@ import addcopyfighandler
 
 from plot_estimator import plot_estimator
 from calculate_ellipse import calculate_ellipse
+from scipy.stats import chi2
 
 # -------------------------------------------------
 # User input parameters
 # -------------------------------------------------
 scenario_type = "baseline"
 # scenario_type = "swervy"
+plot_I = 0
+plot_1 = 1
 
 np.random.seed(16)
 
@@ -163,27 +166,28 @@ for k in range(nt-1):
 # Plot Birds-eye view of true trajectory
 # ---------------------------------------------------------
 
-plt.figure(figsize=(8,6))
-plt.plot(x_true[0,:], x_true[1,:], 'm.', linewidth=3)
-plt.grid(True)
-plt.xlabel("East (m)")
-plt.ylabel("North (m)")
-plt.tight_layout()
+if plot_I:
+    plt.figure(figsize=(8,6))
+    plt.plot(x_true[0,:], x_true[1,:], 'm.', linewidth=3)
+    plt.grid(True)
+    plt.xlabel("East (m)")
+    plt.ylabel("North (m)")
+    plt.tight_layout()
 
-# ---------------------------------------------------------
-# Plot true velocity and heading
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Plot true velocity and heading
+    # ---------------------------------------------------------
 
-plt.figure(figsize=(8,6))
-plt.plot(t, x_true[2,:], 'b-')
-plt.plot(t, x_true[3,:], 'b--')
-plt.xlabel("time (sec)")
-plt.ylabel("ideal state")
-plt.legend(["velocity (m/sec)", "heading (rad)"], loc="lower left")
-plt.axis([0, nt*dt, -2, 6.5])
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+    plt.figure(figsize=(8,6))
+    plt.plot(t, x_true[2,:], 'b-')
+    plt.plot(t, x_true[3,:], 'b--')
+    plt.xlabel("time (sec)")
+    plt.ylabel("ideal state")
+    plt.legend(["velocity (m/sec)", "heading (rad)"], loc="lower left")
+    plt.axis([0, nt*dt, -2, 6.5])
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
 
 # ------------------------------------------------------------
 # Generate noise and measurements
@@ -198,7 +202,9 @@ x_true = np.vstack((x_true,
 
 nx = 6
 
-Q = np.diag([0.1**2, 0.04**2])
+Q = np.diag([0.1**2, 0.02**2])
+Qfac = 0.05
+Q *= Qfac # additiional factor
 w = np.linalg.cholesky(Q) @ np.random.randn(2,nt)
 
 Zacc = Uacc + bias_acc + w[0,:]
@@ -218,7 +224,7 @@ H = np.hstack((np.eye(2), np.zeros((2,4))))
 # ------------------------------------------------------------
 
 x0 = np.zeros(nx)
-P0 = np.diag([2**2, 2**2, 1**2, 0.1**2, 0.5**2, 0.05**2])
+P0 = np.diag([2**2, 2**2, 1**2, 0.1**2, 0.2**2, 0.05**2])
 xhatu = np.zeros((nx, nt))
 xhatp = np.zeros((nx, nt))
 xhatu[:,0] = x0
@@ -241,73 +247,99 @@ for k in range(nt-1):
 # Estimator plots
 # ---------------------------------------------------------
 
-fig, ax = plt.subplots(1,2, figsize=(16,6))
-plot_estimator(t, xhatu[0,:], Pu[0,0,:], x_true[0,:],
-               "error", z[0,:], ax=ax[0])
-ax[0].set_ylabel("x position (m)")
-plot_estimator(t, xhatu[1,:], Pu[1,1,:], x_true[1,:],
-               "error", z[1,:], ax=ax[1])
-ax[1].set_ylabel("y position (m)")
-plt.tight_layout()
+if plot_1:
+    fig, ax = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhatu[0,:], Pu[0,0,:], x_true[0,:],
+                "error", z[0,:], ax=ax[0])
+    ax[0].set_ylabel("x position (m)")
+    plot_estimator(t, xhatu[1,:], Pu[1,1,:], x_true[1,:],
+                "error", z[1,:], ax=ax[1])
+    ax[1].set_ylabel("y position (m)")
+    plt.tight_layout()
 
-fig, ax = plt.subplots(1,2, figsize=(16,6))
-plot_estimator(t, xhatu[2,:], Pu[2,2,:], x_true[2,:],
-               "error", ax=ax[0])
-ax[0].set_ylabel("V velocity (m/sec)")
-thC = 180/np.pi
-plot_estimator(t, xhatu[3,:]*thC, Pu[3,3,:]*thC**2, x_true[3,:]*thC,
-               "error", ax=ax[1])
-ax[1].set_ylabel(r"$\theta$ heading (deg)")
-plt.tight_layout()
+    fig, ax = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhatu[2,:], Pu[2,2,:], x_true[2,:],
+                "error", ax=ax[0])
+    ax[0].set_ylabel("V velocity (m/sec)")
+    thC = 180/np.pi
+    plot_estimator(t, xhatu[3,:]*thC, Pu[3,3,:]*thC**2, x_true[3,:]*thC,
+                "error", ax=ax[1])
+    ax[1].set_ylabel(r"$\theta$ heading (deg)")
+    plt.tight_layout()
 
-fig, ax = plt.subplots(1,2, figsize=(16,6))
-plot_estimator(t, xhatu[4,:], Pu[4,4,:], x_true[4,:],
-               "error", ax=ax[0])
-ax[0].set_ylabel("accel bias (m/sec^2)")
-plot_estimator(t, xhatu[5,:], Pu[5,5,:], x_true[5,:],
-               "error", ax=ax[1])
-ax[1].set_ylabel("RG bias (rad/sec)")
-plt.tight_layout()
+    fig, ax = plt.subplots(1,2, figsize=(16,6))
+    plot_estimator(t, xhatu[4,:], Pu[4,4,:], x_true[4,:],
+                "error", ax=ax[0])
+    ax[0].set_ylabel("accel bias (m/sec^2)")
+    plot_estimator(t, xhatu[5,:], Pu[5,5,:], x_true[5,:],
+                "error", ax=ax[1])
+    ax[1].set_ylabel("RG bias (rad/sec)")
+    plt.tight_layout()
 
-# ---------------------------------------------------------
-# Trajectory with uncertainty ellipses
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Trajectory with uncertainty ellipses
+    # ---------------------------------------------------------
 
-plt.figure(figsize=(8,6))
+    plt.figure(figsize=(8,6))
 
-pt, = plt.plot(x_true[0,:], x_true[1,:], 'm.')
-ph, = plt.plot(xhatu[0,:], xhatu[1,:], 'b-')
+    pt, = plt.plot(x_true[0,:], x_true[1,:], 'm.')
+    ph, = plt.plot(xhatu[0,:], xhatu[1,:], 'b-')
 
-iell = np.concatenate(([2], np.arange(10, nt, 10)))
+    iell = np.concatenate(([2], np.arange(10, nt, 10)))
 
-patch_handles = []
+    patch_handles = []
 
-for ii in iell:
+    for ii in iell:
 
-    Xe, Ye, _, _, _ = calculate_ellipse(
-        xhatu[0:2,ii],
-        Pu[0:2,0:2,ii],
-        3, 50
-    )
+        Xe, Ye, _, _, _ = calculate_ellipse(
+            xhatu[0:2,ii],
+            Pu[0:2,0:2,ii],
+            3, 50
+        )
 
-    plt.plot(xhatu[0,ii], xhatu[1,ii], 'bx')
+        plt.plot(xhatu[0,ii], xhatu[1,ii], 'bx')
 
-    ne = len(Xe)
+        ne = len(Xe)
 
-    x1 = np.concatenate((Xe[int(ne/2):], Xe[:int(ne/2)]))
-    y1 = np.concatenate((Ye[int(ne/2):], Ye[:int(ne/2)]))
+        x1 = np.concatenate((Xe[int(ne/2):], Xe[:int(ne/2)]))
+        y1 = np.concatenate((Ye[int(ne/2):], Ye[:int(ne/2)]))
 
-    plt.plot(x1, y1, 'b-', label='1-sigma ellipse',linewidth=0.5)
-    p = plt.fill(x1, y1, alpha=0.1, color='b')
-    patch_handles.append(p[0])
+        plt.plot(x1, y1, 'b-', label='1-sigma ellipse',linewidth=0.5)
+        p = plt.fill(x1, y1, alpha=0.1, color='b')
+        patch_handles.append(p[0])
 
-plt.xlabel("x position (m)")
-plt.ylabel("y position (m)")
+    plt.xlabel("x position (m)")
+    plt.ylabel("y position (m)")
 
-plt.legend([ph, patch_handles[0], pt],
-           ["position estimate", "error ellipse", "truth"],
-           loc="lower left")
+    plt.legend([ph, patch_handles[0], pt],
+            ["position estimate", "error ellipse", "truth"],
+            loc="lower left")
 
-plt.tight_layout()
+    plt.tight_layout()
 
-plt.show()
+    plt.show()
+
+    # Plot consistency of the filter over time via innovations
+    nz = 2
+    NIS = np.zeros(nt)
+    for k in range(nt):
+        S = H @ Pp[:,:,k] @ H.T + R
+        nu = z[:,k] - H @ xhatp[:,k]
+        NIS[k] = nu.T @ np.linalg.inv(S) @ nu
+
+    # Windowed average for NIS
+    win = 10
+    NIS_avg = np.zeros(nt)
+    for k in range(win, nt):
+        NIS_avg[k] = np.mean(NIS[k-win+1:k+1])
+
+    Blow = chi2.ppf(0.025, win*nz) / win
+    Bhigh = chi2.ppf(0.975, win*nz) / win
+
+    # Plot statistic
+    plt.figure()
+    plt.plot(t, NIS_avg, color='purple')
+    plt.plot(t, np.ones(nt)*Blow, 'r--', label="lower bound")
+    plt.plot(t, np.ones(nt)*Bhigh, 'r--', label="upper bound")
+    plt.title("NIS consistency test")
+    plt.show()
