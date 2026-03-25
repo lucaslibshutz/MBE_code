@@ -23,12 +23,12 @@ from scipy.stats import chi2
 # -------------------------------------------------
 # User input parameters
 # -------------------------------------------------
-scenario_type = "baseline"
-# scenario_type = "swervy"
+# scenario_type = "baseline"
+scenario_type = "swervy"
 plot_I = 0
 plot_1 = 1
 
-np.random.seed(16)
+np.random.seed(42)
 
 # ------------------------------------------------------------
 # System model functions
@@ -72,12 +72,12 @@ def getFG_carposebias(X, dt):
     ])
 
     G = np.array([
-        [0,0],
-        [0,0],
-        [dt,0],
-        [0,dt],
-        [0,0],
-        [0,0],
+        [0,0,0,0],
+        [0,0,0,0],
+        [dt,0,0,0],
+        [0,dt,0,0],
+        [0,0,dt,0],
+        [0,0,0,dt],
     ])
 
     return F, G
@@ -202,10 +202,10 @@ x_true = np.vstack((x_true,
 
 nx = 6
 
-Q = np.diag([0.1**2, 0.02**2])
+Q = np.diag([0.1**2, 0.1**2, 0.1**2, 0.1**2])
 Qfac = 0.05
 Q *= Qfac # additiional factor
-w = np.linalg.cholesky(Q) @ np.random.randn(2,nt)
+w = np.linalg.cholesky(Q) @ np.random.randn(4,nt)
 
 Zacc = Uacc + bias_acc + w[0,:]
 Zrg  = Uomega + bias_rg + w[1,:]
