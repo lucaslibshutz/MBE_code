@@ -15,9 +15,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
+import addcopyfighandler #noqa F401
 from plot_openloop import plot_openloop
 from plot_estimator import plot_estimator
 
+plot_I = 0
+plot_est = 1
 
 # ─────────────────────────────────────────────
 # Internal helper functions
@@ -27,7 +30,7 @@ def vanderpol(t, x, mu, w):
     """Nonlinear differential equations for the Van der Pol oscillator."""
     xdot1 = x[1]
     xdot2 = -x[0] + mu * (1 - x[0] ** 2) * x[1] + w
-    return [xdot1, xdot2]
+    return np.array([xdot1, xdot2])
 
 
 def predict_state_vdp(Xk, mu, tk, tkp1):
@@ -55,7 +58,6 @@ def predict_state_vdp_euler(Xk, mu, tk, tkp1):
     Xk is an (nx x nsp) array.
     """
     Xkp1 = Xk + (tkp1-tk) * vanderpol(tk, Xk, mu, w=0.0)
-    
     return Xkp1
 
 
@@ -154,14 +156,20 @@ def spf_vdp(xEst, PxEst, U, Q, ffun, z, R, hfun, tk, tkp1, mu, nsig):
 # -------------------------------------------------
 # User input parameters
 # -------------------------------------------------
-mu = 0.01                       # Van der Pol constant
-nsig = ## YOUR CODE HERE                        # number of sigmas in SPF
-# ffun = predict_state_vdp        # runga kutta prediction step
-ffun = predict_state_vdp_euler  # runga kutta prediction step
+nx = 2
+mu = 0.1                       # Van der Pol constant
+# mu = 5
+# Use the formula from the slides
+alpha = 1e-2 # example value
+lam = alpha**2 * (nx) - nx
+nsig = np.sqrt(nx + lam)           # sigma point scaling parameter
+print(f"n_\sigma: {nsig}")
+ffun = predict_state_vdp        # runga kutta prediction step
+# ffun = predict_state_vdp_euler  # runga kutta prediction step
 hfun = predict_msmt_vdp         # predicted measurement output
 
 # Initialization
-P0 = ## YOUR CODE HERE # initial convariance
+P0 = 0.25**2 * np.eye(2)## YOUR CODE HERE # initial convariance
 
 
 # ─────────────────────────────────────────────
@@ -201,22 +209,26 @@ v = np.sqrt(R) * rng.standard_normal(nt)
 z = x_true[0, :] + v
 
 # ── Open-loop plots ──────────────────────────────────────────────────────
-fig1, axes1 = plt.subplots(1, 2, figsize=(16, 6))
-fig1.subplots_adjust(wspace=0.3)
+if plot_I:
+    fig1, axes1 = plt.subplots(1, 2, figsize=(16, 6))
+    fig1.subplots_adjust(wspace=0.3)
 
-plot_openloop(t, x_true[0, :], z=z, ax=axes1[0])
-axes1[0].set_ylabel(r'$x_1$ state')
+    plot_openloop(t, x_true[0, :], z=z, ax=axes1[0])
+    axes1[0].set_ylabel(r'$x_1$ state')
 
-plot_openloop(t, x_true[1, :], ax=axes1[1])
-axes1[1].set_ylabel(r'$x_2$ state')
+    plot_openloop(t, x_true[1, :], ax=axes1[1])
+    axes1[1].set_ylabel(r'$x_2$ state')
 
-plt.tight_layout()
+    plt.tight_layout()
+    plt.show()
 
 # ── Sigma Point Filter ───────────────────────────────────────────────────
-xhatp = np.zeros((nx, nt));  xhatp[:, 0] = x0
-Pp    = np.zeros((nx, nx, nt));  Pp[:, :, 0] = P0
+xhatp = np.zeros((nx, nt))
+xhatp[:, 0] = x0
+Pp = np.zeros((nx, nx, nt))
+Pp[:, :, 0] = P0
 xhatu = xhatp.copy()
-Pu    = Pp.copy()
+Pu = Pp.copy()
 
 for k in range(nt - 1):
     zkp1 = z[k + 1]
@@ -228,17 +240,33 @@ for k in range(nt - 1):
     )
 
 # ── Estimator plots ──────────────────────────────────────────────────────
-fig2, axes2 = plt.subplots(1, 2, figsize=(16, 6))
-fig2.subplots_adjust(wspace=0.3)
+if plot_est:
+    fig2, axes2 = plt.subplots(1, 2, figsize=(16, 6))
+    fig2.subplots_adjust(wspace=0.3)
 
-plot_estimator(t, xhatu[0, :], Pu[0, 0, :], x_true[0, :],
-               plot_type='error', z=z, ax=axes2[0])
-axes2[0].set_ylabel(r'$x_1$ state')
+    plot_estimator(t, xhatu[0, :], Pu[0, 0, :], x_true[0, :],
+                plot_type='error', z=z, ax=axes2[0])
+    axes2[0].set_ylabel(r'$x_1$ state')
 
-plot_estimator(t, xhatu[1, :], Pu[1, 1, :], x_true[1, :],
-               plot_type='error', ax=axes2[1])
-axes2[1].set_ylabel(r'$x_2$ state')
+    plot_estimator(t, xhatu[1, :], Pu[1, 1, :], x_true[1, :],
+                plot_type='error', ax=axes2[1])
+    axes2[1].set_ylabel(r'$x_2$ state')
 
-plt.tight_layout()
+    fig2.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
+    plt.tight_layout()
 
-plt.show()
+    plt.show()
+
+    fig3, axes3 = plt.subplots(1, 2, figsize=(16, 6))
+    fig2.subplots_adjust(wspace=0.3)
+
+    plot_estimator(t, xhatu[0, :], Pu[0, 0, :], x_true[0, :],
+                   plot_type='state', z=z, ax=axes3[0])
+
+    plot_estimator(t, xhatu[1, :], Pu[1, 1, :], x_true[1, :],
+                   plot_type='state', ax=axes3[1])
+    axes3[0].set_ylabel(r'$x_1$ state')
+    axes3[1].set_ylabel(r'$x_2$ state')
+    fig3.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
+    plt.tight_layout()
+    plt.show()
