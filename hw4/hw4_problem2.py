@@ -157,12 +157,13 @@ def spf_vdp(xEst, PxEst, U, Q, ffun, z, R, hfun, tk, tkp1, mu, nsig):
 # User input parameters
 # -------------------------------------------------
 nx = 2
-mu = 0.1                       # Van der Pol constant
-# mu = 5
+# mu = 0.1                       # Van der Pol constant
+mu = 5
 # Use the formula from the slides
-alpha = 1e-2 # example value
-lam = alpha**2 * (nx) - nx
-nsig = np.sqrt(nx + lam)           # sigma point scaling parameter
+# alpha = 1e-2 # example value
+# lam = alpha**2 * (nx) - nx
+# nsig = np.sqrt(nx + lam)           # sigma point scaling parameter
+nsig = 4
 print(f"n_\sigma: {nsig}")
 ffun = predict_state_vdp        # runga kutta prediction step
 # ffun = predict_state_vdp_euler  # runga kutta prediction step
@@ -252,7 +253,7 @@ if plot_est:
                 plot_type='error', ax=axes2[1])
     axes2[1].set_ylabel(r'$x_2$ state')
 
-    fig2.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
+    # fig2.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
     plt.tight_layout()
 
     plt.show()
@@ -267,6 +268,6 @@ if plot_est:
                    plot_type='state', ax=axes3[1])
     axes3[0].set_ylabel(r'$x_1$ state')
     axes3[1].set_ylabel(r'$x_2$ state')
-    fig3.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
+    # fig3.suptitle(rf"SPF Estimation for $n_\sigma$ = {nsig:.2f}, $\alpha$ = {alpha:.2f}")
     plt.tight_layout()
     plt.show()
