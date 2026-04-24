@@ -1,11 +1,11 @@
 import jax
 import jax.numpy as jnp
-from jax import Array
+import addcopyfighandler # noqa
 from matplotlib import pyplot as plt
 from functools import partial
 
 # Global variables
-MU = 2.0
+MU = 5.0
 DT = 0.05
 T_END = 20.0
 N_PARTICLES = 1000

@@ -181,7 +181,7 @@ rng = np.random.default_rng(10)
 
 # Time vector
 dt = 0.05
-tf = 50.0
+tf = 20.0
 t = np.arange(0, tf + dt, dt)
 nt = len(t)
 
